@@ -52,6 +52,17 @@ void fill(uint64_t n)
     }
 }
 
+static inline size_t rand_idx(uint64_t *g, size_t mask) {
+    *g += 0x9E3779B97F4A7C15ULL;
+    return (size_t)(((*g * 0xBF58476D1CE4E5B9ULL) >> 20) & mask);
+}
+
+static uint64_t g = 88172645463325252ULL;   // fixed seed
+static inline uint64_t rnd(void) {
+    g ^= g << 13; g ^= g >> 7; g ^= g << 17;
+    return g;
+}
+
 
 // Program Under Test 
 
@@ -64,7 +75,7 @@ uint64_t test(size_t ws_size, long iters)
 
     uint64_t s = 0;
     for (long n = 0; n < iters; n++) {
-        s += d[random() & mask];
+        s += d[rand_idx(&g, mask)];
         fill(fl);
     }
     return s;
@@ -77,7 +88,7 @@ void setup(size_t bytes)
     data_mask = n_data - 1;
     data = aligned_alloc(LINE, n_data * 8);
     for (size_t i = 0; i < n_data; i++) 
-        data[i] = random();
+        data[i] = rnd();
 }
 
 // ==================== // 
@@ -129,7 +140,6 @@ int main(int argc, char **argv) {
     if (g_k < 1) g_k = 1;
     if (g_k > MAXK) g_k = MAXK;
 
-    srandom(12345);  // Seed the Random Number Generator
     setup(mb << 20); 
     uint64_t result = test(mb, iters);
 

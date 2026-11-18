@@ -41,6 +41,18 @@ void fill(int n)
     }
 }
 
+static inline size_t rand_idx(uint64_t *g, size_t mask) {
+    *g += 0x9E3779B97F4A7C15ULL;
+    return (size_t)(((*g * 0xBF58476D1CE4E5B9ULL) >> 20) & mask);
+}
+
+static uint64_t g = 88172645463325252ULL;   // fixed seed
+static inline uint64_t rnd(void) {
+    g ^= g << 13; g ^= g >> 7; g ^= g << 17;
+    return g;
+}
+
+
 // Program Under Test 
 static inline __attribute__((always_inline))
 uint64_t test(const int K, long iters)
@@ -79,7 +91,7 @@ void setup(size_t bytes)
     /* Sattolo's shuffle: yields ONE random cycle (no short loops) */
     for (size_t i = n_nodes - 1; i > 0; i--) 
     {
-        size_t j = (size_t) random() % i;
+        size_t j = (size_t) rnd() % i;
         size_t t = nodes[i].next; 
         nodes[i].next = nodes[j].next; 
         nodes[j].next = t;
@@ -143,7 +155,6 @@ int main(int argc, char **argv) {
     if (g_k < 1) g_k = 1;
     if (g_k > MAXK) g_k = MAXK;
 
-    srandom(12345);  // Seed the Random Number Generator
     setup(mb << 20); 
 
     uint64_t res; 
